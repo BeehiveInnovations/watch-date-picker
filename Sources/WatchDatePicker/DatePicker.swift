@@ -111,7 +111,7 @@ public struct DatePicker<Label: View>: View {
   }
   
   @ViewBuilder private var cancelOrBackButton: some View {
-    if displayedComponents == [.date, .hourAndMinute], !isWatchOS10 {
+    if displayedComponents == [.date, .hourAndMinute], !usesToolbarButtons {
       Button(action: { secondViewIsPresented = false }) {
         Image(systemName: "chevron.backward")
       }
@@ -173,13 +173,14 @@ public struct DatePicker<Label: View>: View {
     }
   }
   
-  private var isWatchOS10: Bool {
-    if #available(watchOS 10, *) {
-		return true
-	}
+  /// Whether SwiftUI can safely build the availability-gated toolbar content.
+  private var usesToolbarButtons: Bool {
+    if #available(watchOS 10.5, *) {
+      return true
+    }
 
-	return false
-	}
+    return false
+  }
 
  	private var dateInput: some View {
     VStack(spacing: 10) {
@@ -206,15 +207,15 @@ public struct DatePicker<Label: View>: View {
     ZStack(alignment: .bottom) {
       TimeInputView(selection: $newSelection)
 
-      if #unavailable(watchOS 10) {
+      if #unavailable(watchOS 10.5) {
         circularButtons
           .padding(.bottom, 16)
           .padding(.horizontal, -24)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .navigationBarHidden( !isWatchOS10)
-    .watchStatusBar(hidden: !isWatchOS10)
+    .navigationBarHidden(!usesToolbarButtons)
+    .watchStatusBar(hidden: !usesToolbarButtons)
     .edgesIgnoringSafeArea(.all)
     .padding(.bottom, -40)
     .padding(.horizontal, 20)
@@ -231,7 +232,8 @@ public struct DatePicker<Label: View>: View {
     }
     .toolbar {
       #if compiler(>=5.9)
-      if #available(watchOS 10, *) {
+      // SwiftUI marks ToolbarContentBuilder.buildLimitedAvailability as watchOS 10.5+.
+      if #available(watchOS 10.5, *) {
         if !displayedComponents.contains(.date) {
           ToolbarItem(placement: .topBarLeading) {
             cancelOrBackButton
